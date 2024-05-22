@@ -1,0 +1,40 @@
+{
+  "name": "weather-outlook-api",
+  "type": "module",
+  "module": "src/index.ts",
+  "version": "0.0.1",
+  "author": "Blake Knight <oss.ideas@gmail.com> (https://blakek.me/)",
+  "description": "A weather API built on the NWS and Storm Prediction Center that provides the categorical, tornado, hail, wind, etc. outlooks for a location.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/blakek/weather-outlook-api.git"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "graphql": "^16.8.1",
+    "graphql-yoga": "^5.3.1"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.3.0",
+    "@types/bun": "latest",
+    "eslint": "9.x",
+    "eslint-config-prettier": "^9.1.0",
+    "globals": "^15.3.0",
+    "npm-run-all": "^4.1.5",
+    "prettier": "^3.2.5",
+    "rimraf": "^5.0.7",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.10.0",
+    "vitest": "^1.6.0"
+  },
+  "peerDependencies": {},
+  "scripts": {
+    "compile": "bun build ./src/index.ts --compile --outfile weather-outlook-api",
+    "format-check": "prettier --check '*.ts' 'src/**/*.ts'",
+    "format": "prettier --write '*.ts' 'src/**/*.ts'",
+    "lint": "eslint",
+    "start": "bun src/index.ts",
+    "typeCheck": "tsc --noEmit",
+    "validate": "run-p format-check lint typeCheck"
+  }
+}
