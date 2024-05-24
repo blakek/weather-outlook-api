@@ -17,6 +17,7 @@
   "devDependencies": {
     "@eslint/js": "^9.3.0",
     "@types/bun": "latest",
+    "@types/geojson": "^7946.0.14",
     "eslint": "9.x",
     "eslint-config-prettier": "^9.1.0",
     "globals": "^15.3.0",
@@ -29,11 +30,12 @@
   },
   "peerDependencies": {},
   "scripts": {
+    "start": "NODE_ENV=production bun src/index.ts",
+    "dev": "NODE_ENV=development bun run --watch --inspect ./src/index.ts",
     "compile": "bun build ./src/index.ts --compile --outfile weather-outlook-api",
     "format-check": "prettier --check '*.ts' 'src/**/*.ts'",
     "format": "prettier --write '*.ts' 'src/**/*.ts'",
     "lint": "eslint",
-    "start": "bun src/index.ts",
     "typeCheck": "tsc --noEmit",
     "validate": "run-p format-check lint typeCheck"
   }

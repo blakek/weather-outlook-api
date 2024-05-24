@@ -197,17 +197,17 @@ export function isPointInPolygon(
    * errors.
    */
   tolerance = 0,
-): [isInPolygon: boolean, reason?: string] {
+): boolean {
   // Point cannot be inside a polygon with less than 3 points
   if (polygon.length < POLYGON_MINIMUM_POINTS) {
-    return [false, "not a polygon"];
+    return false;
   }
 
   // Optimization: First check if the point is within the bounding box.
   const isInBoundingBox = isPointInBoundingBox(polygon, point, tolerance);
 
   if (!isInBoundingBox) {
-    return [false, "outside bounding box"];
+    return false;
   }
 
   const inflatedPolygon = inflatePolygon(polygon, tolerance);
@@ -232,7 +232,7 @@ export function isPointInPolygon(
     false,
   );
 
-  return [isInside];
+  return isInside;
 }
 
 export function isValidPoint(maybePoint: unknown): maybePoint is Point {
