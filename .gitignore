@@ -3,6 +3,7 @@ node_modules
 
 # Built code
 dist/
+.vercel/
 
 # Logs
 logs
