@@ -52,7 +52,7 @@ interface CategoryDetails {
   color: string;
 }
 
-const productBaseUrl = new URL("https://www.spc.noaa.gov/products/outlook/");
+const productBaseUrl = new URL("https://www.spc.noaa.gov");
 
 export const CategoryOutlook: Record<CategoryID, CategoryDetails> = {
   NONE: {
@@ -111,55 +111,29 @@ export const CategoryOutlook: Record<CategoryID, CategoryDetails> = {
   },
 };
 
-// async function fetchCategoricalForecast(
-//   day: 1 | 2 | 3,
-// ): Promise<GeoJSONForecast> {
-//   const url = new URL(`/day${day}otlk_cat.lyr.geojson`, productBaseUrl);
-//   const response = await fetch(url);
-//   return response.json();
-// }
-//
-// async function fetchProbabilisticForecast(
-//   day: 1 | 2 | 3,
-//   type: Omit<ConvectiveForecastType, ConvectiveForecastType.Categorical>,
-// ): Promise<{
-//   probabilistic: GeoJSONForecast;
-//   significant: GeoJSONForecast;
-// }> {
-//   const probabilisticUrl = new URL(
-//     `/day${day}otlk_${type}.lyr.geojson`,
-//     productBaseUrl,
-//   );
-//
-//   const significantUrl = new URL(
-//     `/day${day}otlk_sig${type}.lyr.geojson`,
-//     productBaseUrl,
-//   );
-//
-//   const [probabilisticResponse, significantResponse] = await Promise.all([
-//     fetch(probabilisticUrl),
-//     fetch(significantUrl),
-//   ]);
-//
-//   const [probabilistic, significant] = await Promise.all([
-//     probabilisticResponse.json(),
-//     significantResponse.json(),
-//   ]);
-//
-//   return { probabilistic, significant };
-// }
-
-// Local-only mocks for testing
 async function fetchForecast(
-  _day: 1 | 2 | 3,
+  day: 1 | 2 | 3,
   type: ConvectiveForecastType,
 ): Promise<GeoJSONForecast> {
-  const file = Bun.file(
-    `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
+  const url = new URL(
+    `/products/outlook/day${day}otlk_${type}.lyr.geojson`,
+    productBaseUrl,
   );
 
-  return file.json();
+  const response = await fetch(url);
+  return response.json();
 }
+
+// For local file-based testing
+// async function fetchForecast(
+//   _day: 1 | 2 | 3,
+//   type: ConvectiveForecastType,
+// ): Promise<GeoJSONForecast> {
+//   const file = Bun.file(
+//     `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
+//   );
+//   return file.json();
+// }
 
 function findOutlookForLocation(
   location: GeoLocation,

@@ -153,11 +153,13 @@ export const resolvers = {
     },
 
     tornadoProbability: async (parent: ConvectiveOutlookArgs) => {
-      return fetchForecastForPoint(
+      const forecast = await fetchForecastForPoint(
         parent.day,
         ConvectiveForecastType.Tornado,
         parent.location,
       );
+
+      return Number(forecast) || 0;
     },
 
     hasSignificantTornadoRisk: async (parent: ConvectiveOutlookArgs) => {
@@ -171,11 +173,13 @@ export const resolvers = {
     },
 
     hailProbability: async (parent: ConvectiveOutlookArgs) => {
-      return fetchForecastForPoint(
+      const forecast = await fetchForecastForPoint(
         parent.day,
         ConvectiveForecastType.Hail,
         parent.location,
       );
+
+      return Number(forecast) || 0;
     },
 
     hasSignificantHailRisk: async (parent: ConvectiveOutlookArgs) => {
@@ -189,11 +193,13 @@ export const resolvers = {
     },
 
     windProbability: async (parent: ConvectiveOutlookArgs) => {
-      return fetchForecastForPoint(
+      const forecast = await fetchForecastForPoint(
         parent.day,
         ConvectiveForecastType.Wind,
         parent.location,
       );
+
+      return Number(forecast) || 0;
     },
 
     hasSignificantWindRisk: async (parent: ConvectiveOutlookArgs) => {
