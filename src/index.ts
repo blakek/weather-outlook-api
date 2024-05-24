@@ -16,3 +16,5 @@ const endpointUrl = new URL(
 );
 
 console.info(`🚀 Server is running on ${endpointUrl.href}`);
+
+export default server;
