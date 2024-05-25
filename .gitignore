@@ -11,3 +11,4 @@ npm-debug.log*
 
 # Test data
 test-files/*.geojson
+.vercel
