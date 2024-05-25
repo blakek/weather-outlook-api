@@ -9,12 +9,13 @@ const yoga = createYoga({
 const server = Bun.serve({
   async fetch(request) {
     // HACK: Both Vercel and GraphQL Yoga try to parse the body.
-    const rawBody = await request.text();
-    const revertedRequest = new Request(request, {
-      body: rawBody,
-    });
+    // const rawBody = await request.text();
+    // const revertedRequest = new Request(request, {
+    //   body: rawBody,
+    // });
+    // return yoga.handleRequest(revertedRequest, {});
 
-    return yoga.handleRequest(revertedRequest, {});
+    return yoga.fetch(request, {});
   },
 });
 
