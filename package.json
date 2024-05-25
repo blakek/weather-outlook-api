@@ -31,9 +31,10 @@
   "peerDependencies": {},
   "scripts": {
     "start": "NODE_ENV=production bun src/index.ts",
+    "_DEV_COMMENT_": "To test the Vercel server, you can rename the dev script to something else and then run 'bunx vercel dev'",
     "dev": "NODE_ENV=development bun run --watch --inspect ./src/index.ts",
     "compile": "bun build ./src/index.ts --compile --outfile weather-outlook-api",
-    "vercel-build": "bun build ./src/vercel-handler.ts --target node --outfile public/api/graphql.js",
+    "vercel-build": "bun build ./src/vercel-handler.ts --target node --outfile api/graphql.js",
     "format-check": "prettier --check '*.ts' 'src/**/*.ts'",
     "format": "prettier --write '*.ts' 'src/**/*.ts'",
     "lint": "eslint",
