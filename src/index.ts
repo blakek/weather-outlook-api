@@ -1,20 +1,21 @@
 import { createSchema, createYoga } from "graphql-yoga";
 import { resolvers, typeDefs } from "./schema";
 
-export const config = {
-  api: {
-    // Disable body parsing (required for file uploads)
-    bodyParser: false,
-  },
-};
-
 const yoga = createYoga({
   graphqlEndpoint: "/api",
   schema: createSchema({ typeDefs, resolvers }),
 });
 
 const server = Bun.serve({
-  fetch: yoga,
+  async fetch(request) {
+    // HACK: Both Vercel and GraphQL Yoga try to parse the body.
+    const rawBody = await request.text();
+    const revertedRequest = new Request(request, {
+      body: rawBody,
+    });
+
+    return yoga.handleRequest(revertedRequest, {});
+  },
 });
 
 const endpointUrl = new URL(
@@ -24,4 +25,6 @@ const endpointUrl = new URL(
 
 console.info(`🚀 Server is running on ${endpointUrl.href}`);
 
-export default server;
+// HACK: Vercel wants the server to be the default export but Bun doesn't.
+const defaultExport = server.hostname === "localhost" ? undefined : server;
+export default defaultExport;
