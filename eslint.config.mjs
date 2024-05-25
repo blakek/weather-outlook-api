@@ -9,8 +9,6 @@ export default [
   ...tseslint.configs.recommended,
   eslintConfigPrettier,
   {
-    ignores: ["node_modules/", "dist/"],
-
     languageOptions: {
       parserOptions: {
         project: "./tsconfig.json",
@@ -117,5 +115,8 @@ export default [
       "@typescript-eslint/return-await": ["off"],
       "@typescript-eslint/triple-slash-reference": "error",
     },
+  },
+  {
+    ignores: ["node_modules/", "dist/", "api/"],
   },
 ];

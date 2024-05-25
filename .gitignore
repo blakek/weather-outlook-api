@@ -2,7 +2,7 @@
 node_modules
 
 # Built code
-dist/
+public/
 
 # Logs
 logs
@@ -11,3 +11,4 @@ npm-debug.log*
 
 # Test data
 test-files/*.geojson
+.vercel
