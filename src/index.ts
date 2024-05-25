@@ -1,9 +1,9 @@
-import { createSchema, createYoga } from "graphql-yoga";
-import { resolvers, typeDefs } from "./schema";
+import { createYoga } from "graphql-yoga";
+import { schema } from "./schema";
 
 const yoga = createYoga({
-  graphqlEndpoint: "/api",
-  schema: createSchema({ typeDefs, resolvers }),
+  graphqlEndpoint: "/api/graphql",
+  schema,
 });
 
 const server = Bun.serve({

@@ -33,7 +33,7 @@
     "start": "NODE_ENV=production bun src/index.ts",
     "dev": "NODE_ENV=development bun run --watch --inspect ./src/index.ts",
     "compile": "bun build ./src/index.ts --compile --outfile weather-outlook-api",
-    "vercel-build": "bun build ./src/index.ts --target node --outdir dist",
+    "vercel-build": "bun build ./src/vercel-handler.ts --target node --outfile api/graphql.js",
     "format-check": "prettier --check '*.ts' 'src/**/*.ts'",
     "format": "prettier --write '*.ts' 'src/**/*.ts'",
     "lint": "eslint",

@@ -1,3 +1,4 @@
+import { createSchema } from "graphql-yoga";
 import {
   ConvectiveForecastType,
   fetchForecastForPoint,
@@ -233,3 +234,5 @@ export const resolvers = {
     },
   },
 };
+
+export const schema = createSchema({ typeDefs, resolvers });
