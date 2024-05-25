@@ -7,7 +7,10 @@ const yoga = createYoga({
 });
 
 const server = Bun.serve({
-  fetch: yoga,
+  fetch: async (req) => {
+    // Workaround Vercel parsing the request body as JSON for us
+    return yoga.handleRequest(req, {});
+  },
 });
 
 const endpointUrl = new URL(
@@ -16,5 +19,3 @@ const endpointUrl = new URL(
 );
 
 console.info(`🚀 Server is running on ${endpointUrl.href}`);
-
-export default server;
