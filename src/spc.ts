@@ -1,5 +1,4 @@
 import * as Bun from "bun";
-import "geojson";
 import { isPointInPolygon, type Point, type Polygon } from "./geometry";
 import { getConfig } from "./config";
 
