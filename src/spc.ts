@@ -1,18 +1,23 @@
+import * as Bun from "bun";
+import "geojson";
 import { isPointInPolygon, type Point, type Polygon } from "./geometry";
+import { getConfig } from "./config";
 
 interface GeoLocation {
   latitude: number;
   longitude: number;
 }
 
+interface ConditionalIntensity {
+  level: number;
+  label: string;
+}
+
 export enum ConvectiveForecastType {
   Categorical = "cat",
   Tornado = "torn",
-  SignificantTornado = "sigtorn",
   Hail = "hail",
-  SignificantHail = "sighail",
   Wind = "wind",
-  SignificantWind = "sigwind",
 }
 
 interface GeoJSONForecastProperties {
@@ -53,6 +58,7 @@ interface CategoryDetails {
 }
 
 const productBaseUrl = new URL("https://www.spc.noaa.gov");
+const config = getConfig();
 
 export const CategoryOutlook: Record<CategoryID, CategoryDetails> = {
   NONE: {
@@ -115,6 +121,10 @@ async function fetchForecast(
   day: 1 | 2 | 3,
   type: ConvectiveForecastType,
 ): Promise<GeoJSONForecast> {
+  if (config.useLocalForecastFiles) {
+    return fetchForecastFromTestFile(day, type);
+  }
+
   const url = new URL(
     `/products/outlook/day${day}otlk_${type}.lyr.geojson`,
     productBaseUrl,
@@ -125,15 +135,15 @@ async function fetchForecast(
 }
 
 // For local file-based testing
-// async function fetchForecast(
-//   _day: 1 | 2 | 3,
-//   type: ConvectiveForecastType,
-// ): Promise<GeoJSONForecast> {
-//   const file = Bun.file(
-//     `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
-//   );
-//   return file.json();
-// }
+async function fetchForecastFromTestFile(
+  _day: 1 | 2 | 3,
+  type: ConvectiveForecastType,
+): Promise<GeoJSONForecast> {
+  const file = Bun.file(
+    `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
+  );
+  return file.json();
+}
 
 function findOutlookForLocation(
   location: GeoLocation,
@@ -142,13 +152,12 @@ function findOutlookForLocation(
 ): GeoJSONForecastProperties | undefined {
   const locationPoint: Point = [location.longitude, location.latitude];
 
-  const features = forecast.features
-    .filter((f) =>
-      getSignificant
-        ? f.properties.LABEL === "SIGN"
-        : f.properties.LABEL !== "SIGN",
-    )
-    .reverse();
+  // Historically the SPC used the label "SIGN" to indicate a significant
+  // hazard.  The new format replaces this with CIG1‑CIG3 labels, which can be
+  // found in the same `LABEL` property.  The function no longer filters out
+  // features; we simply iterate over all features in reverse order (most
+  // recent first) to find the first feature that contains the point.
+  const features = forecast.features.reverse();
 
   for (const feature of features) {
     const polygon = feature.geometry;
@@ -186,22 +195,43 @@ export function getRiskCategory(
   return CategoryOutlook.NONE;
 }
 
+/**
+ * Convert a forecast label to a ConditionalIntensity object.
+ * Returns null if the label is not a supported CIG value.
+ */
+export function getConditionalIntensity(
+  label: string | undefined,
+  hazard: "tornado" | "hail" | "wind",
+): ConditionalIntensity | undefined {
+  const prefix = "CIG";
+
+  if (!label?.startsWith(prefix)) {
+    return;
+  }
+
+  const level = parseInt(label.slice(prefix.length));
+
+  if (isNaN(level)) {
+    return;
+  }
+
+  if (hazard === "hail" && level > 2) {
+    return;
+  }
+
+  return { level, label };
+}
+
 export async function fetchForecastForPoint(
   day: 1 | 2 | 3,
   type: ConvectiveForecastType,
   location: GeoLocation,
 ): Promise<string | undefined> {
   const forecast = await fetchForecast(day, type);
-  const isCheckingForSignificant =
-    type === ConvectiveForecastType.SignificantHail ||
-    type === ConvectiveForecastType.SignificantTornado ||
-    type === ConvectiveForecastType.SignificantWind;
-
-  const properties = findOutlookForLocation(
-    location,
-    forecast,
-    isCheckingForSignificant,
-  );
+  // The `findOutlookForLocation` now returns the forecast label regardless of
+  // whether it was previously classified as significant.  The caller decides
+  // whether the forecast refers to a significant hazard.
+  const properties = findOutlookForLocation(location, forecast);
 
   return properties?.LABEL;
 }
