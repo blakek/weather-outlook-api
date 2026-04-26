@@ -32,11 +32,11 @@
   "scripts": {
     "start": "NODE_ENV=production bun src/index.ts",
     "_DEV_COMMENT_": "To test the Vercel server, you can rename the dev script to something else and then run 'bunx vercel dev'",
-    "dev": "NODE_ENV=development bun run --watch --inspect ./src/index.ts",
+    "dev": "NODE_ENV=development bun run --watch ./src/index.ts",
     "compile": "bun build ./src/index.ts --compile --outfile weather-outlook-api",
     "predeploy": "bun build ./src/vercel-handler.ts --target node --outfile api/graphql.js",
-    "format-check": "prettier --check '*.ts' 'src/**/*.ts'",
-    "format": "prettier --write '*.ts' 'src/**/*.ts'",
+    "format-check": "prettier --check 'src/**/*.ts'",
+    "format": "prettier --write 'src/**/*.ts'",
     "lint": "eslint",
     "typeCheck": "tsc --noEmit",
     "validate": "run-p format-check lint typeCheck"
