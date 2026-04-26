@@ -38,7 +38,7 @@
     "format-check": "prettier --check 'src/**/*.ts'",
     "format": "prettier --write 'src/**/*.ts'",
     "lint": "eslint",
-    "typeCheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
     "validate": "run-p format-check lint typeCheck"
   }
 }
