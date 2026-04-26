@@ -19,8 +19,6 @@ export function parseBooleanEnv(
   return Boolean(value);
 }
 
-const _config: Config | undefined;
-
 export function getConfig(): Config {
   const useLocalForecastFiles = parseBooleanEnv(
     process.env.USE_LOCAL_FORECAST_FILES,
