@@ -155,7 +155,7 @@ function findOutlookForLocation(
   // found in the same `LABEL` property.  The function no longer filters out
   // features; we simply iterate over all features in reverse order (most
   // recent first) to find the first feature that contains the point.
-  const features = forecast.features.reverse();
+  const features = forecast.features.toReversed();
 
   for (const feature of features) {
     const polygon = feature.geometry;
@@ -226,9 +226,6 @@ export async function fetchForecastForPoint(
   location: GeoLocation,
 ): Promise<string | undefined> {
   const forecast = await fetchForecast(day, type);
-  // The `findOutlookForLocation` now returns the forecast label regardless of
-  // whether it was previously classified as significant.  The caller decides
-  // whether the forecast refers to a significant hazard.
   const properties = findOutlookForLocation(location, forecast);
 
   return properties?.LABEL;
