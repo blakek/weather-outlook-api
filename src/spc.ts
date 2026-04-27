@@ -147,7 +147,6 @@ async function fetchForecastFromTestFile(
 function findOutlookForLocation(
   location: GeoLocation,
   forecast: GeoJSONForecast,
-  getSignificant = false,
 ): GeoJSONForecastProperties | undefined {
   const locationPoint: Point = [location.longitude, location.latitude];
 
