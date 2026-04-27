@@ -1,6 +1,6 @@
 import * as Bun from "bun";
-import { isPointInPolygon, type Point, type Polygon } from "./geometry";
 import { getConfig } from "./config";
+import { isPointInPolygon, type Point, type Polygon } from "./geometry";
 
 interface GeoLocation {
   latitude: number;
@@ -18,6 +18,25 @@ export enum ConvectiveForecastType {
   Hail = "hail",
   Wind = "wind",
 }
+
+interface ConvectiveForecastResult {
+  category: CategoryDetails;
+}
+
+interface ProbabilityForecastResult {
+  probability: number;
+  conditionalIntensity?: ConditionalIntensity;
+}
+
+type ForecastResult<T extends ConvectiveForecastType = ConvectiveForecastType> =
+  T extends ConvectiveForecastType.Categorical
+    ? ConvectiveForecastResult
+    : T extends
+          | ConvectiveForecastType.Tornado
+          | ConvectiveForecastType.Hail
+          | ConvectiveForecastType.Wind
+      ? ProbabilityForecastResult
+      : never;
 
 interface GeoJSONForecastProperties {
   DN: number;
@@ -144,53 +163,125 @@ async function fetchForecastFromTestFile(
   return file.json();
 }
 
-function findOutlookForLocation(
+function containsPoint(
+  geometry: GeoJSONForecast["features"][number]["geometry"],
+  point: Point,
+): boolean {
+  if (geometry.type === "Polygon") {
+    return isPointInPolygon(geometry.coordinates[0] as Polygon, point);
+  }
+
+  if (geometry.type === "MultiPolygon") {
+    return geometry.coordinates.some((coordinates) =>
+      isPointInPolygon(coordinates[0] as Polygon, point),
+    );
+  }
+
+  return false;
+}
+
+function findOutlookForLocation<T extends ConvectiveForecastType>(
   location: GeoLocation,
+  forecastType: T,
   forecast: GeoJSONForecast,
-): GeoJSONForecastProperties | undefined {
+): ForecastResult<T> {
   const locationPoint: Point = [location.longitude, location.latitude];
+  let candidates: GeoJSONForecastProperties[] = [];
 
-  // Historically the SPC used the label "SIGN" to indicate a significant
-  // hazard.  The new format replaces this with CIG1‑CIG3 labels, which can be
-  // found in the same `LABEL` property.  The function no longer filters out
-  // features; we simply iterate over all features in reverse order (most
-  // recent first) to find the first feature that contains the point.
-  const features = forecast.features.toReversed();
-
-  for (const feature of features) {
-    const polygon = feature.geometry;
-
-    if (
-      polygon.type === "Polygon" &&
-      isPointInPolygon(polygon.coordinates[0] as Polygon, locationPoint)
-    ) {
-      return feature.properties;
+  for (const feature of forecast.features) {
+    if (!containsPoint(feature.geometry, locationPoint)) {
+      continue;
     }
 
-    if (polygon.type === "MultiPolygon") {
-      for (const coordinates of polygon.coordinates) {
-        if (isPointInPolygon(coordinates[0] as Polygon, locationPoint)) {
-          return feature.properties;
-        }
-      }
+    if (
+      forecastType === ConvectiveForecastType.Categorical &&
+      !isRiskCategory(feature.properties.LABEL)
+    ) {
+      continue;
+    }
+
+    candidates.push(feature.properties);
+  }
+
+  if (candidates.length === 0) {
+    return getDefaultForecastResult(forecastType);
+  }
+
+  if (forecastType === ConvectiveForecastType.Categorical) {
+    const best = getBestMatch(candidates);
+    return {
+      category:
+        CategoryOutlook[best?.LABEL as CategoryID] || CategoryOutlook.NONE,
+    } as ForecastResult<T>;
+  }
+
+  // Separate probability and conditional intensity candidates for probabilistic forecasts
+  const [probabilityCandidates, conditionalIntensityCandidates] = partition(
+    candidates,
+    (c) => !isNaN(Number(c.LABEL)),
+  );
+
+  const bestProbability = getBestMatch(probabilityCandidates);
+  const bestConditionalIntensity = getBestMatch(conditionalIntensityCandidates);
+
+  return {
+    probability: Number(bestProbability?.LABEL) || 0,
+    conditionalIntensity: getConditionalIntensity(
+      bestConditionalIntensity?.LABEL,
+    ),
+  } as ForecastResult<T>;
+}
+
+export type MapFn<T, U> = (value: T, index: number, array: T[]) => U;
+
+function partition<T>(
+  iterable: Iterable<T>,
+  fn: MapFn<T, boolean>,
+): [T[], T[]] {
+  return Array.from(iterable).reduce<[T[], T[]]>(
+    (accum, value, index, self) => {
+      const resultIndex = fn(value, index, self) ? 0 : 1;
+      accum[resultIndex].push(value);
+      return accum;
+    },
+    [[], []],
+  );
+}
+
+function getDefaultForecastResult<T extends ConvectiveForecastType>(
+  type: T,
+): ForecastResult<T> {
+  if (type === ConvectiveForecastType.Categorical) {
+    return {
+      category: CategoryOutlook.NONE,
+    } as ForecastResult<T>;
+  }
+
+  return {
+    probability: 0,
+  } as ForecastResult<T>;
+}
+
+/**
+ * Gets the best match between two forecast properties based on the forecast type.
+ * Only works with properties of the same type (e.g. probabilistic or categorical).
+ */
+function getBestMatch(
+  properties: GeoJSONForecastProperties[],
+): GeoJSONForecastProperties | undefined {
+  let best: GeoJSONForecastProperties | undefined;
+
+  for (const candidate of properties) {
+    if (!best || candidate.DN > best.DN) {
+      best = candidate;
     }
   }
 
-  return undefined;
+  return best;
 }
 
 function isRiskCategory(value?: string): value is keyof typeof CategoryOutlook {
   return typeof value === "string" && value in CategoryOutlook;
-}
-
-export function getRiskCategory(
-  value?: string,
-): (typeof CategoryOutlook)[keyof typeof CategoryOutlook] {
-  if (isRiskCategory(value)) {
-    return CategoryOutlook[value];
-  }
-
-  return CategoryOutlook.NONE;
 }
 
 /**
@@ -199,7 +290,6 @@ export function getRiskCategory(
  */
 export function getConditionalIntensity(
   label: string | undefined,
-  hazard: "tornado" | "hail" | "wind",
 ): ConditionalIntensity | undefined {
   const prefix = "CIG";
 
@@ -213,21 +303,14 @@ export function getConditionalIntensity(
     return;
   }
 
-  // Hail forecasts only support CIG1 and CIG2
-  if (hazard === "hail" && level > 2) {
-    return;
-  }
-
   return { level, label };
 }
 
-export async function fetchForecastForPoint(
+export async function fetchForecastForPoint<T extends ConvectiveForecastType>(
   day: 1 | 2 | 3,
-  type: ConvectiveForecastType,
+  type: T,
   location: GeoLocation,
-): Promise<string | undefined> {
+): Promise<ForecastResult<T>> {
   const forecast = await fetchForecast(day, type);
-  const properties = findOutlookForLocation(location, forecast);
-
-  return properties?.LABEL;
+  return findOutlookForLocation(location, type, forecast);
 }

@@ -1,10 +1,5 @@
 import { createSchema } from "graphql-yoga";
-import {
-  ConvectiveForecastType,
-  fetchForecastForPoint,
-  getConditionalIntensity,
-  getRiskCategory,
-} from "./spc";
+import { ConvectiveForecastType, fetchForecastForPoint } from "./spc";
 
 export const typeDefs = /* GraphQL */ `
   type RiskCategory {
@@ -155,7 +150,7 @@ export const resolvers = {
         parent.location,
       );
 
-      return getRiskCategory(forecast);
+      return forecast.category;
     },
   },
 
@@ -166,7 +161,7 @@ export const resolvers = {
         ConvectiveForecastType.Categorical,
         parent.location,
       );
-      return getRiskCategory(forecast);
+      return forecast.category;
     },
 
     tornadoProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -176,7 +171,7 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
     tornadoConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
@@ -185,7 +180,7 @@ export const resolvers = {
         ConvectiveForecastType.Tornado,
         parent.location,
       );
-      return getConditionalIntensity(forecast, "tornado");
+      return forecast.conditionalIntensity;
     },
 
     hailProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -195,7 +190,7 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
     hailConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
@@ -204,7 +199,7 @@ export const resolvers = {
         ConvectiveForecastType.Hail,
         parent.location,
       );
-      return getConditionalIntensity(forecast, "hail");
+      return forecast.conditionalIntensity;
     },
 
     windProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -214,7 +209,7 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
     windConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
@@ -223,7 +218,7 @@ export const resolvers = {
         ConvectiveForecastType.Wind,
         parent.location,
       );
-      return getConditionalIntensity(forecast, "wind");
+      return forecast.conditionalIntensity;
     },
   },
 
