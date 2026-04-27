@@ -1,4 +1,4 @@
-import * as Bun from "bun";
+// import * as Bun from "bun";
 import { getConfig } from "./config";
 import { isPointInPolygon, type Point, type Polygon } from "./geometry";
 
@@ -152,16 +152,16 @@ async function fetchForecast(
   return response.json();
 }
 
-// For local file-based testing
-async function fetchForecastFromTestFile(
-  _day: 1 | 2 | 3,
-  type: ConvectiveForecastType,
-): Promise<GeoJSONForecast> {
-  const file = Bun.file(
-    `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
-  );
-  return file.json();
-}
+// // For local file-based testing
+// async function fetchForecastFromTestFile(
+//   _day: 1 | 2 | 3,
+//   type: ConvectiveForecastType,
+// ): Promise<GeoJSONForecast> {
+//   const file = Bun.file(
+//     `./test-files/day1otlk_20210325_1630_${type}.lyr.geojson`,
+//   );
+//   return file.json();
+// }
 
 function containsPoint(
   geometry: GeoJSONForecast["features"][number]["geometry"],
