@@ -213,6 +213,7 @@ export function getConditionalIntensity(
     return;
   }
 
+  // Hail forecasts only support CIG1 and CIG2
   if (hazard === "hail" && level > 2) {
     return;
   }
