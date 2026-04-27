@@ -1,9 +1,5 @@
 import { createSchema } from "graphql-yoga";
-import {
-  ConvectiveForecastType,
-  fetchForecastForPoint,
-  getRiskCategory,
-} from "./spc";
+import { ConvectiveForecastType, fetchForecastForPoint } from "./spc";
 
 export const typeDefs = /* GraphQL */ `
   type RiskCategory {
@@ -83,9 +79,9 @@ export const typeDefs = /* GraphQL */ `
     tornadoProbability: Float!
 
     """
-    If there is a >=10% probability of an EF2+ tornado within 25 miles of a point
+    Conditional intensity for tornado hazards.
     """
-    hasSignificantTornadoRisk: Boolean!
+    tornadoConditionalIntensity: ConditionalIntensity
 
     """
     Probability of hail >=1" in diameter occurring within 25 miles of the location.
@@ -93,9 +89,9 @@ export const typeDefs = /* GraphQL */ `
     hailProbability: Float!
 
     """
-    If there is a >=10% probability of hail >=2" in diameter within 25 miles of a point
+    Conditional intensity for hail hazards.
     """
-    hasSignificantHailRisk: Boolean!
+    hailConditionalIntensity: ConditionalIntensity
 
     """
     Probability of wind gusts >=58 mph occurring within 25 miles of the location.
@@ -103,10 +99,26 @@ export const typeDefs = /* GraphQL */ `
     windProbability: Float!
 
     """
-    If there is a >=10% probability of wind gusts >=75 mph within 25 miles of a point
+    Conditional intensity for wind hazards.
     """
-    hasSignificantWindRisk: Boolean!
+    windConditionalIntensity: ConditionalIntensity
   }
+
+  # -----------------------------------------------------------------------
+  # Conditional intensity types
+  # -----------------------------------------------------------------------
+  type ConditionalIntensity {
+    """
+    The intensity level of the conditional intensity group.
+    """
+    level: Int!
+    """
+    The original label string from the forecast data (e.g., "CIG2").
+    """
+    label: String!
+  }
+
+  # The DetailedConvectiveOutlook type is defined above with the new fields.
 
   type ConvectiveOutlookDays {
     day1: DetailedConvectiveOutlook!
@@ -138,7 +150,7 @@ export const resolvers = {
         parent.location,
       );
 
-      return getRiskCategory(forecast);
+      return forecast.category;
     },
   },
 
@@ -149,8 +161,7 @@ export const resolvers = {
         ConvectiveForecastType.Categorical,
         parent.location,
       );
-
-      return getRiskCategory(forecast);
+      return forecast.category;
     },
 
     tornadoProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -160,17 +171,16 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
-    hasSignificantTornadoRisk: async (parent: ConvectiveOutlookArgs) => {
+    tornadoConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
       const forecast = await fetchForecastForPoint(
         parent.day,
-        ConvectiveForecastType.SignificantTornado,
+        ConvectiveForecastType.Tornado,
         parent.location,
       );
-
-      return forecast === "SIGN";
+      return forecast.conditionalIntensity;
     },
 
     hailProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -180,17 +190,16 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
-    hasSignificantHailRisk: async (parent: ConvectiveOutlookArgs) => {
+    hailConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
       const forecast = await fetchForecastForPoint(
         parent.day,
-        ConvectiveForecastType.SignificantHail,
+        ConvectiveForecastType.Hail,
         parent.location,
       );
-
-      return forecast === "SIGN";
+      return forecast.conditionalIntensity;
     },
 
     windProbability: async (parent: ConvectiveOutlookArgs) => {
@@ -200,17 +209,16 @@ export const resolvers = {
         parent.location,
       );
 
-      return Number(forecast) || 0;
+      return forecast.probability;
     },
 
-    hasSignificantWindRisk: async (parent: ConvectiveOutlookArgs) => {
+    windConditionalIntensity: async (parent: ConvectiveOutlookArgs) => {
       const forecast = await fetchForecastForPoint(
         parent.day,
-        ConvectiveForecastType.SignificantWind,
+        ConvectiveForecastType.Wind,
         parent.location,
       );
-
-      return forecast === "SIGN";
+      return forecast.conditionalIntensity;
     },
   },
 
@@ -218,18 +226,9 @@ export const resolvers = {
     convectiveOutlook: (_: never, args: { location: GeoLocation }) => {
       // Allow the nested resolvers to handle the data
       return {
-        day1: {
-          day: 1,
-          location: args.location,
-        },
-        day2: {
-          day: 2,
-          location: args.location,
-        },
-        day3: {
-          day: 3,
-          location: args.location,
-        },
+        day1: { day: 1, location: args.location },
+        day2: { day: 2, location: args.location },
+        day3: { day: 3, location: args.location },
       };
     },
   },
